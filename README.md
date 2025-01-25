@@ -1,6 +1,6 @@
 # ubi9
 
-Builds my custom AlmaLinux 9 minimal Docker image. It's a small image (~200MB) which can used in workflows as follows: 
+Builds a custom AlmaLinux 9 minimal Docker image. It's a small image (~200MB) which can then be used in workflows as follows: 
 
 ```yaml
 ...
