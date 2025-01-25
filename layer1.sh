@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # layer1.sh
 
+set -euo pipefail
 # ---------------------------------------
 # Install required packages
+microdnf update -y
 microdnf install -y \
-curl \
 git
 microdnf clean all

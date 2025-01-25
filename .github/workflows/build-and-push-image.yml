@@ -13,12 +13,10 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    container:
-      image: almalinux:9-minimal
     steps:
-      - name: Install required packages
-        run: |
-          microdnf install -y git docker && microdnf clean all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
       - name: Checkout code
         uses: actions/checkout@v4
