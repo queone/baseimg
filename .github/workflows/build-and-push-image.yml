@@ -16,9 +16,9 @@ jobs:
     container:
       image: almalinux:9-minimal
     steps:
-      - name: Install Git
+      - name: Install required packages
         run: |
-          microdnf install -y git && microdnf clean all
+          microdnf install -y git docker && microdnf clean all
 
       - name: Checkout code
         uses: actions/checkout@v4

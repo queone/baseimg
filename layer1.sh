@@ -5,6 +5,5 @@
 # Install required packages
 microdnf install -y \
 curl \
-git \
-docker
+git
 microdnf clean all
