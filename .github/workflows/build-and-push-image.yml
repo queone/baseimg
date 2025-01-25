@@ -1,0 +1,39 @@
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+  
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    container:
+      image: almalinux:9-minimal
+    steps:
+      - name: Install Git
+        run: |
+          microdnf install -y git && microdnf clean all
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build the Docker image
+        run: |
+          docker build -t ghcr.io/queone/ubi9:latest .
+
+      - name: Push the Docker image
+        run: |
+          docker push ghcr.io/queone/ubi9:latest
