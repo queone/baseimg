@@ -8,3 +8,4 @@ microdnf update -y
 microdnf install -y \
 git
 microdnf clean all
+
