@@ -39,30 +39,27 @@ jobs:
       - name: Delete old images from GHCR (ubi9:*)
         run: |
           TOKEN=${{ secrets.GITHUB_TOKEN }}
-          REPO="queone/ubi9"
+          USERNAME="queone"
+          REPO="ubi9"
 
-          # Fetch package versions and ensure we get a valid JSON response
           RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/users/queone/packages/container/${REPO}/versions")
+            "https://api.github.com/users/$USERNAME/packages/container/$REPO/versions")
 
-          # Debugging: print response in case of failure
           echo "API Response: $RESPONSE"
 
-          # Extract version IDs safely
-          IMAGES=$(echo "$RESPONSE" | jq -r 'if type=="array" then .[].id else empty end')
+          IMAGES=$(echo "$RESPONSE" | jq -r 'map(select(.id)) | .[].id')
 
           if [[ -z "$IMAGES" ]]; then
-            echo "No images found or invalid API response."
+            echo "No images found."
             exit 0
           fi
 
-          # Delete each image version
           for IMAGE_ID in $IMAGES; do
             echo "Deleting image ID: $IMAGE_ID"
             curl -X DELETE -H "Authorization: Bearer $TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/users/queone/packages/container/${REPO}/versions/$IMAGE_ID"
+              "https://api.github.com/users/$USERNAME/packages/container/$REPO/versions/$IMAGE_ID"
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
