@@ -30,8 +30,8 @@ jobs:
 
       - name: Build the Docker image
         run: |
-          docker build -t ghcr.io/queone/ubi9:latest .
+          docker build -t ghcr.io/queone/cntimage:latest .
 
       - name: Push the Docker image
         run: |
-          docker push ghcr.io/queone/ubi9:latest
+          docker push ghcr.io/queone/cntimage:latest
