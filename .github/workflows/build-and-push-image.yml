@@ -35,3 +35,24 @@ jobs:
       - name: Push the Docker image
         run: |
           docker push ghcr.io/queone/cntimage:latest
+
+      - name: Delete old images from GHCR (ubi9:*)
+        run: |
+          TOKEN=${{ secrets.GITHUB_TOKEN }}
+          REPO="queone/ubi9"
+
+          # Get all image versions
+          IMAGES=$(curl -s -H "Authorization: Bearer $TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/users/queone/packages/container/${REPO}/versions" | jq -r '.[].id')
+
+          # Delete each image version
+          for IMAGE_ID in $IMAGES; do
+            echo "Deleting image ID: $IMAGE_ID"
+            curl -X DELETE -H "Authorization: Bearer $TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/users/queone/packages/container/${REPO}/versions/$IMAGE_ID"
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
