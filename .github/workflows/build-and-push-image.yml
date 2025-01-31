@@ -36,38 +36,7 @@ jobs:
         run: |
           docker push ghcr.io/queone/cntimage:latest
 
-      - name: Delete old images from GHCR (ubi9:*)
-        run: |
-          TOKEN=${{ secrets.GITHUB_TOKEN }}
-          USERNAME="queone"
-          REPO="ubi9"
-
-          RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/users/$USERNAME/packages/container/$REPO/versions")
-
-          echo "API Response: $RESPONSE"
-
-          IMAGES=$(echo "$RESPONSE" | jq -r 'map(select(.id)) | .[].id')
-
-          if [[ -z "$IMAGES" ]]; then
-            echo "No images found."
-            exit 0
-          fi
-
-          for IMAGE_ID in $IMAGES; do
-            TAGS=$(echo "$RESPONSE" | jq -r --argjson id "$IMAGE_ID" '.[] | select(.id == $id) | .metadata.container.tags | length')
-
-            if [[ "$TAGS" -le 1 ]]; then
-              echo "Skipping deletion of last tagged version: $IMAGE_ID"
-              continue
-            fi
-
-            echo "Deleting image ID: $IMAGE_ID"
-            curl -X DELETE -H "Authorization: Bearer $TOKEN" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/users/$USERNAME/packages/container/$REPO/versions/$IMAGE_ID"
-          done
+      - name: Remove package and all images
+        run: .github/scripts/remove-pkg-image.sh ubi9
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
