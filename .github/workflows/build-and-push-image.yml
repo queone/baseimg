@@ -56,6 +56,13 @@ jobs:
           fi
 
           for IMAGE_ID in $IMAGES; do
+            TAGS=$(echo "$RESPONSE" | jq -r --argjson id "$IMAGE_ID" '.[] | select(.id == $id) | .metadata.container.tags | length')
+
+            if [[ "$TAGS" -le 1 ]]; then
+              echo "Skipping deletion of last tagged version: $IMAGE_ID"
+              continue
+            fi
+
             echo "Deleting image ID: $IMAGE_ID"
             curl -X DELETE -H "Authorization: Bearer $TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
@@ -63,3 +70,4 @@ jobs:
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
