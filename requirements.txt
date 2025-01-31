@@ -1,0 +1,4 @@
+requests
+yq
+txt2pdf
+hvac
