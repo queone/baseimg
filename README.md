@@ -5,13 +5,13 @@ Source code to build a custom [AlmaLinux 9](https://almalinux.org/)-based, minim
 ## Usage
 
 ```yaml
-...
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/queone/cntimage:latest # <== like this 
     steps:
-...
+
 ```
 
