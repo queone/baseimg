@@ -41,10 +41,21 @@ jobs:
           TOKEN=${{ secrets.GITHUB_TOKEN }}
           REPO="queone/ubi9"
 
-          # Get all image versions
-          IMAGES=$(curl -s -H "Authorization: Bearer $TOKEN" \
+          # Fetch package versions and ensure we get a valid JSON response
+          RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/users/queone/packages/container/${REPO}/versions" | jq -r '.[].id')
+            "https://api.github.com/users/queone/packages/container/${REPO}/versions")
+
+          # Debugging: print response in case of failure
+          echo "API Response: $RESPONSE"
+
+          # Extract version IDs safely
+          IMAGES=$(echo "$RESPONSE" | jq -r 'if type=="array" then .[].id else empty end')
+
+          if [[ -z "$IMAGES" ]]; then
+            echo "No images found or invalid API response."
+            exit 0
+          fi
 
           # Delete each image version
           for IMAGE_ID in $IMAGES; do
@@ -55,4 +66,3 @@ jobs:
           done
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
