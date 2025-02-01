@@ -20,6 +20,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure we fetch all tags
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
@@ -31,11 +33,11 @@ jobs:
       - name: Get latest tag and determine new version
         id: versioning
         run: |
-          REPO="queone/cntimage"
-          TOKEN="${{ secrets.GITHUB_TOKEN }}"
-          
-          # Fetch the latest tag from GitHub
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          # Fetch latest tags from GitHub
+          git fetch --tags
+
+          # Get latest tag, ignoring non-semver tags
+          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
 
           if [[ -z "$LATEST_TAG" ]]; then
             NEW_TAG="1.0.0"
