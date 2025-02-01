@@ -1,10 +1,12 @@
-name: Build, Tag, and Push to GHCR
+name: Manually Release Image
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Specify the new tag (leave empty for auto-increment)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -30,21 +32,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get latest tag and determine new version
+      - name: Determine new version
         id: versioning
         run: |
           # Fetch latest tags from GitHub
           git fetch --tags
 
-          # Get latest tag, ignoring non-semver tags
-          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
-
-          if [[ -z "$LATEST_TAG" ]]; then
-            NEW_TAG="1.0.0"
+          # Use manually provided tag if given
+          if [[ -n "${{ github.event.inputs.tag_name }}" ]]; then
+            NEW_TAG="${{ github.event.inputs.tag_name }}"
           else
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
-            PATCH=$((PATCH + 1))
-            NEW_TAG="$MAJOR.$MINOR.$PATCH"
+            # Get latest tag, ignoring non-semver tags
+            LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+
+            if [[ -z "$LATEST_TAG" ]]; then
+              NEW_TAG="1.0.0"
+            else
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
+              PATCH=$((PATCH + 1))
+              NEW_TAG="$MAJOR.$MINOR.$PATCH"
+            fi
           fi
 
           echo "Latest tag: $LATEST_TAG"
