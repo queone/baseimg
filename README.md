@@ -1,8 +1,10 @@
 # cntimage
 
-Source code to build a custom [AlmaLinux 9](https://almalinux.org/)-based, minimalist **container image**. The accompaying [Build and Push GHCR](https://github.com/queone/cntimage/actions/workflows/build-and-push-image.yml) workflow must be run to then store it in the [GHCR registry](https://github.blog/news-insights/product-news/introducing-github-container-registry/).
+Source to build a custom [AlmaLinux 9](https://almalinux.org/)-based, minimalist **container image**. The accompanying workflows allow testing the image and releasing it to the [GHCR registry](https://github.blog/news-insights/product-news/introducing-github-container-registry/).
 
 ## Usage
+
+To use the image simply refer to it in your workfow `image` parameter:
 
 ```yaml
 
@@ -10,8 +12,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/queone/cntimage:latest # <== like this 
+      image: ghcr.io/queone/cntimage:103 # <== like this 
     steps:
 
 ```
-
