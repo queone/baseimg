@@ -16,7 +16,8 @@ python3.12-pip \
 jq \
 which \
 iputils \
-iproute
+iproute \
+libcap
 # Append/add other required packages here
 microdnf clean all
 rm -rf /var/cache/dnf/*
@@ -33,6 +34,8 @@ gpgkey=https://rpm.releases.hashicorp.com/gpg
 EOF
 #microdnf repoquery vault # To search available
 microdnf install -y vault-1.18.4
+# Vault requires IPC_LOCK capability for memory locking
+setcap cap_ipc_lock=+ep /usr/bin/vault 
 
 # ---------------------------------------
 # Set up Python 3.12 as default
