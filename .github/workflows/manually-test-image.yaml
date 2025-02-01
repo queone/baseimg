@@ -2,6 +2,11 @@ name: Manually Test Image
 
 on:
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Specify the tag to test (leave empty for latest)"
+        required: false
+        type: string
 
 jobs:
   test-image:    
@@ -15,19 +20,24 @@ jobs:
           fetch-depth: 0  # Ensure all tags are fetched
           ref: main
 
-      - name: Get latest tag
+      - name: Get latest tag if not specified
         id: versioning
         run: |
           git fetch --tags
-          LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
-          
-          if [[ -z "$LATEST_TAG" ]]; then
-            echo "No tags found, using default 1.0.0"
-            LATEST_TAG="1.0.0"
+
+          if [[ -n "${{ github.event.inputs.tag_name }}" ]]; then
+            TEST_TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+            if [[ -z "$TEST_TAG" ]]; then
+              echo "No tags found, using default 1.0.0"
+              TEST_TAG="1.0.0"
+            fi
           fi
           
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "TEST_TAG=$TEST_TAG"
+          echo "TEST_TAG=$TEST_TAG" >> $GITHUB_ENV
+          echo "TEST_TAG=$TEST_TAG" >> $GITHUB_OUTPUT
 
   test-container:
     runs-on: ubuntu-latest
