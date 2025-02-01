@@ -35,7 +35,7 @@ EOF
 #microdnf repoquery vault # To search available
 microdnf install -y vault-1.18.4
 # Vault requires IPC_LOCK capability for memory locking
-setcap cap_ipc_lock=+ep /usr/bin/vault 
+setcap cap_ipc_lock= /usr/sbin/vault
 
 # ---------------------------------------
 # Set up Python 3.12 as default
