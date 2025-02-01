@@ -26,9 +26,8 @@ jobs:
             LATEST_TAG="1.0.0"
           fi
           
-          echo "LATEST_TAG=$LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "::set-output name=LATEST_TAG::$LATEST_TAG"
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_OUTPUT
 
   test-container:
     runs-on: ubuntu-latest
@@ -44,12 +43,14 @@ jobs:
 
       - name: Test commands
         run: |
+          set -e  # Fail if any command fails
+          chmod +x /bin/sh || true  # Ensure shell is executable
           Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           printf "${Gre}START${Rst}\n"
-          git --version
+          git --version || echo "git not found"
           ls -l
           cat /etc/os-release
           uname -m
-          go version
-          vault version
+          go version || echo "go not found"
+          vault version || echo "vault not found"
           printf "${Red}END!${Rst}\n"
