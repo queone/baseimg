@@ -1,4 +1,4 @@
-name: Manually Test Latest Image
+name: Manually Test Image
 
 on:
   workflow_dispatch:
