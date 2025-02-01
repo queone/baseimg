@@ -10,9 +10,6 @@ jobs:
       image: ghcr.io/queone/cntimage:1.0.0
 
     steps:
-      - name: Authenticate to GHCR
-        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
