@@ -6,6 +6,7 @@ set -euo pipefail
 # Install required packages
 microdnf update -y
 microdnf install -y \
+tar \
 git \
 glibc \
 python3-libs \
