@@ -6,6 +6,8 @@ on:
 jobs:
   test-image:    
     runs-on: ubuntu-latest
+    outputs:
+      latest_tag: ${{ steps.versioning.outputs.LATEST_TAG }}  # Expose tag to next job
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,14 +26,15 @@ jobs:
             LATEST_TAG="1.0.0"
           fi
           
+          echo "LATEST_TAG=$LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
-          echo "Using tag: $LATEST_TAG"
+          echo "::set-output name=LATEST_TAG::$LATEST_TAG"
 
   test-container:
     runs-on: ubuntu-latest
     needs: test-image
     container:
-      image: ghcr.io/queone/cntimage:${{ env.LATEST_TAG }}
+      image: ghcr.io/queone/cntimage:${{ needs.test-image.outputs.latest_tag }}
 
     steps:
       - name: Setup Go environment
