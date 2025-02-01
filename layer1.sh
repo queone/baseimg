@@ -16,13 +16,7 @@ python3.12-pip \
 jq \
 which \
 iputils \
-iproute \
-python3.12-cffi \
-cairo \
-pango \
-gdk-pixbuf2 \
-libffi \
-shared-mime-info
+iproute
 # Append/add other required packages here
 microdnf clean all
 rm -rf /var/cache/dnf/*
@@ -38,7 +32,7 @@ gpgcheck=1
 gpgkey=https://rpm.releases.hashicorp.com/gpg
 EOF
 #microdnf repoquery vault # To search available
-microdnf install -y vault-1.16.3
+microdnf install -y vault-1.18.4
 
 # ---------------------------------------
 # Set up Python 3.12 as default
