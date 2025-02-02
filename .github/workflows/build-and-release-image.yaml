@@ -76,10 +76,13 @@ jobs:
 
       - name: Create GitHub Release with new tag
         run: |
+          REPO="${{ github.repository }}"  # This dynamically gets the correct repo owner/name
+          echo "Creating release in: $REPO"
+
           RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X POST \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/queone/${{ env.IMAGE_NAME }}/releases" \
+            "https://api.github.com/repos/$REPO/releases" \
             -d "{\"tag_name\": \"${{ env.TAG }}\", \"name\": \"Release ${{ env.TAG }}\", \"body\": \"Auto-generated release for version ${{ env.TAG }}\", \"draft\": false, \"prerelease\": false}")
 
           if [[ "$RESPONSE" -ne 201 ]]; then
