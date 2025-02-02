@@ -47,3 +47,8 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" \
   "https://api.github.com/orgs/$USERNAME/packages/container/$PACKAGE_NAME"
 
 echo "Package $PACKAGE_NAME deleted successfully."
+
+# Remove the Git tag
+echo "Removing Git tag: $VERSION"
+git tag -d "$VERSION" || echo "Tag $VERSION not found locally."
+git push --delete origin "$VERSION" || echo "Tag $VERSION not found on remote."
