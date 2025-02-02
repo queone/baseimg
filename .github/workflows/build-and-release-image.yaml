@@ -47,11 +47,10 @@ jobs:
         id: extract
         run: |
           # Read the Dockerfile and extract the image name
-          IMAGE_NAME=$(grep -E '^LABEL name=' ${{ github.event.inputs.dockerfile }} | cut -d'=' -f2 | tr -d ' "')
-          if [[ -z "$IMAGE_NAME" ]]; then
-            echo "Image name not found in Dockerfile. Using default."
-            IMAGE_NAME="image-default-name"
-          fi
+          RAW_IMAGE_NAME=$(grep -E '^LABEL name=' ${{ github.event.inputs.dockerfile }})
+          echo "Raw image name: '$RAW_IMAGE_NAME'"
+          IMAGE_NAME=$(echo "$RAW_IMAGE_NAME" | cut -d'=' -f2 | tr -d ' "')
+          IMAGE_NAME=$(echo "$IMAGE_NAME" | sed 's/\\$//')  # Remove trailing backslash if present
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Determine new version
