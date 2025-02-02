@@ -24,8 +24,8 @@ RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
 
 echo "API Response: $RESPONSE"
 
-# Find the specific version ID
-VERSION_ID=$(echo "$RESPONSE" | jq -r --arg VERSION "$VERSION" '.[] | select(.name == $VERSION) | .id')
+# Find the specific version ID by checking the tags
+VERSION_ID=$(echo "$RESPONSE" | jq -r --arg VERSION "$VERSION" '.[] | select(.metadata.container.tags | index($VERSION)) | .id')
 
 if [[ -z "$VERSION_ID" ]]; then
   echo "No image found for version: $VERSION"
