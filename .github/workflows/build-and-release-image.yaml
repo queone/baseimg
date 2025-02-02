@@ -14,7 +14,6 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
-          - Dockerfile.cntimage
 
 permissions:
   contents: write
@@ -46,36 +45,15 @@ jobs:
       - name: Extract image name from Dockerfile
         id: extract
         run: |
-          # Read the Dockerfile and extract the image name
-          RAW_IMAGE_NAME=$(grep -E '^LABEL name=' ${{ github.event.inputs.dockerfile }})
-          echo "Raw image name: '$RAW_IMAGE_NAME'"
-          IMAGE_NAME=$(echo "$RAW_IMAGE_NAME" | cut -d'=' -f2 | tr -d ' "')
-          IMAGE_NAME=$(echo "$IMAGE_NAME" | sed 's/\\$//')  # Remove trailing backslash if present
+          IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
       - name: Determine new version
         id: versioning
         run: |
-          # Fetch latest tags from GitHub
-          git fetch --tags
-
-          # Use manually provided tag if given
-          if [[ -n "${{ github.event.inputs.tag_name }}" ]]; then
-            NEW_TAG="${{ github.event.inputs.tag_name }}"
-          else
-            # Get latest tag, ignoring non-semver tags
-            LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
-
-            if [[ -z "$LATEST_TAG" ]]; then
-              NEW_TAG="1.0.0"
-            else
-              IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
-              PATCH=$((PATCH + 1))
-              NEW_TAG="$MAJOR.$MINOR.$PATCH"
-            fi
-          fi
-
-          echo "Latest tag: $LATEST_TAG"
+          NEW_TAG=$(GITHUB_TAG_NAME="${{ github.event.inputs.tag_name }}" .github/scripts/determine-version.sh)
+          echo "Latest tag: ${LATEST_TAG:-none}"
           echo "New tag: $NEW_TAG"
           echo "TAG=$NEW_TAG" >> $GITHUB_ENV
           echo "TAG=$NEW_TAG" >> $GITHUB_OUTPUT

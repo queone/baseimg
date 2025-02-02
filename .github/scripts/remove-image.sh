@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
+# remove-image.sh
 
-set -e
+set -euo pipefail
+Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
 
 if [ -z "$1" ]; then
   echo "Usage: $0 <package-name> <version>"
@@ -13,7 +15,7 @@ USERNAME="queone"
 TOKEN="${GH_TOKEN}"
 
 if [ -z "$TOKEN" ]; then
-  echo "Error: GH_TOKEN is not set."
+  printf "${Red}Error: GH_TOKEN is not set.${Rst}\n"
   exit 1
 fi
 
@@ -22,13 +24,13 @@ RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   "https://api.github.com/orgs/$USERNAME/packages/container/$PACKAGE_NAME/versions")
 
-echo "API Response: $RESPONSE"
+printf "${Yel}API Response: $RESPONSE${Rst}\n"
 
 # Find the specific version ID by checking the tags
 VERSION_ID=$(echo "$RESPONSE" | jq -r --arg VERSION "$VERSION" '.[] | select(.metadata.container.tags | index($VERSION)) | .id')
 
 if [[ -z "$VERSION_ID" ]]; then
-  echo "No image found for version: $VERSION"
+  printf "${Yel}No image found for version: $VERSION${Rst}\n"
   exit 1
 fi
 
@@ -41,7 +43,7 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" \
   -H "Accept: application/vnd.github.v3+json" \
   "https://api.github.com/orgs/$USERNAME/packages/container/$PACKAGE_NAME/versions/$VERSION_ID"
 
-echo "Version $VERSION of package $PACKAGE_NAME deleted successfully."
+printf "${Yel}Version $VERSION of package $PACKAGE_NAME deleted successfully.${Rst}\n"
 
 # Check if this was the last version
 if [[ $VERSION_COUNT -eq 1 ]]; then
@@ -51,7 +53,7 @@ if [[ $VERSION_COUNT -eq 1 ]]; then
     -H "Accept: application/vnd.github.v3+json" \
     "https://api.github.com/orgs/$USERNAME/packages/container/$PACKAGE_NAME"
 
-  echo "Package $PACKAGE_NAME deleted successfully."
+  printf "${Yel}Package $PACKAGE_NAME deleted successfully.${Rst}\n"
 else
-  echo "Package $PACKAGE_NAME not deleted because other versions exist."
+  printf "${Yel}Package $PACKAGE_NAME not deleted because other versions exist.${Rst}\n"
 fi

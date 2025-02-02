@@ -10,17 +10,17 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
-          - Dockerfile.cntimage
       version:
         description: "Specify the version to test (e.g., 1.0.0, leave empty for latest)"
         required: false
         type: string
 
 jobs:
-  test-image:    
+  test-image:
     runs-on: ubuntu-latest
     outputs:
-      latest_tag: ${{ steps.versioning.outputs.LATEST_TAG }}  # Expose tag to next job
+      latest_tag: ${{ steps.versioning.outputs.TEST_TAG }}  # Expose tag to next job
+      image_name: ${{ steps.extract.outputs.IMAGE_NAME }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -28,21 +28,22 @@ jobs:
           fetch-depth: 0  # Ensure all tags are fetched
           ref: main
 
+      - name: Extract image name from Dockerfile
+        id: extract
+        run: |
+          IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
+
       - name: Get latest tag if not specified
         id: versioning
         run: |
-          git fetch --tags
-
           if [[ -n "${{ github.event.inputs.version }}" ]]; then
             TEST_TAG="${{ github.event.inputs.version }}"
           else
-            TEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
-            if [[ -z "$TEST_TAG" ]]; then
-              echo "No tags found, using default 1.0.0"
-              TEST_TAG="1.0.0"
-            fi
+            TEST_TAG=$(.github/scripts/determine-version.sh)
           fi
-          
+
           echo "TEST_TAG=$TEST_TAG"
           echo "TEST_TAG=$TEST_TAG" >> $GITHUB_ENV
           echo "TEST_TAG=$TEST_TAG" >> $GITHUB_OUTPUT
@@ -51,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-image
     container:
-      image: ghcr.io/queone/cntimage:${{ env.TEST_TAG }}  # Use the specified or latest tag
+      image: ghcr.io/queone/${{ needs.test-image.outputs.image_name }}:${{ needs.test-image.outputs.latest_tag }} # Use extracted image name and latest tag
 
     steps:
       - name: Setup Go environment

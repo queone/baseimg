@@ -10,7 +10,6 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
-          - Dockerfile.cntimage
       version:
         description: "Specify the version to remove (e.g., 1.0.0)"
         required: true
@@ -40,11 +39,7 @@ jobs:
       - name: Extract image name from Dockerfile
         id: extract
         run: |
-          # Read the Dockerfile and extract the image name
-          RAW_IMAGE_NAME=$(grep -E '^LABEL name=' ${{ github.event.inputs.dockerfile }})
-          echo "Raw image name: '$RAW_IMAGE_NAME'"
-          IMAGE_NAME=$(echo "$RAW_IMAGE_NAME" | cut -d'=' -f2 | tr -d ' "')
-          IMAGE_NAME=$(echo "$IMAGE_NAME" | sed 's/\\$//')  # Remove trailing backslash if present
+          IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
       - name: Debugging output
