@@ -1,0 +1,99 @@
+name: Build Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Specify the new tag (leave empty for auto-increment)"
+        required: false
+        type: string
+      dockerfile:
+        description: "Select the Dockerfile to use (e.g., Dockerfile.dev, Dockerfile.prod)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.versioning.outputs.TAG }}
+      image_name: ${{ steps.extract.outputs.image_name }}
+      tgz_name: ${{ steps.extract.outputs.tgz_name }}
+    steps:
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3.8.0
+
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0  # Ensure we fetch all tags
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image name and tgz filename from Dockerfile
+        id: extract
+        run: |
+          # Read the Dockerfile and extract the image name and tgz filename
+          IMAGE_NAME=$(grep -E '^LABEL name=' ${{ github.event.inputs.dockerfile }} | cut -d'=' -f2 | tr -d ' "')
+          if [[ -z "$IMAGE_NAME" ]]; then
+            echo "Image name not found in Dockerfile. Using default."
+            IMAGE_NAME="image-default-name"
+          fi
+          TAG="${{ github.event.inputs.tag_name }}"
+          if [[ -z "$TAG" ]]; then
+            TAG="latest"
+          fi
+          TGZ_NAME="image-${IMAGE_NAME}-${TAG}.tgz"
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "TGZ_NAME=$TGZ_NAME" >> $GITHUB_ENV
+
+      - name: Determine new version
+        id: versioning
+        run: |
+          # Fetch latest tags from GitHub
+          git fetch --tags
+
+          # Use manually provided tag if given
+          if [[ -n "${{ github.event.inputs.tag_name }}" ]]; then
+            NEW_TAG="${{ github.event.inputs.tag_name }}"
+          else
+            # Get latest tag, ignoring non-semver tags
+            LATEST_TAG=$(git tag --sort=-v:refname | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)
+
+            if [[ -z "$LATEST_TAG" ]]; then
+              NEW_TAG="1.0.0"
+            else
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$LATEST_TAG"
+              PATCH=$((PATCH + 1))
+              NEW_TAG="$MAJOR.$MINOR.$PATCH"
+            fi
+          fi
+
+          echo "Latest tag: $LATEST_TAG"
+          echo "New tag: $NEW_TAG"
+          echo "TAG=$NEW_TAG" >> $GITHUB_ENV
+          echo "TAG=$NEW_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build the Docker image with new tag
+        run: |
+          docker build -f ${{ github.event.inputs.dockerfile }} -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }} -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest .
+
+      - name: Save as tgz
+        run: |
+          docker save ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }} | gzip > ${{ env.TGZ_NAME }}
+
+      - name: Upload artifact as tgz
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: docker-image
+          path: ${{ env.TGZ_NAME }}
