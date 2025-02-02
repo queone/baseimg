@@ -1,0 +1,53 @@
+name: Remove Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      dockerfile:
+        description: "Select the Dockerfile to use"
+        required: true
+        type: choice
+        options:
+          - Dockerfile.base
+          - Dockerfile.vault
+      version:
+        description: "Specify the version to remove (e.g., 1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  remove_image:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0  # Ensure we fetch all tags
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image name from Dockerfile
+        id: extract
+        run: |
+          # Read the Dockerfile and extract the image name
+          IMAGE_NAME=$(grep -E '^LABEL name=' ${{ github.event.inputs.dockerfile }} | cut -d'=' -f2 | tr -d ' "')
+          if [[ -z "$IMAGE_NAME" ]]; then
+            echo "Image name not found in Dockerfile. Using default."
+            IMAGE_NAME="image-default-name"
+          fi
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+
+      - name: Remove previously released image and package
+        run: .github/scripts/remove-image.sh ${{ env.IMAGE_NAME }} ${{ github.event.inputs.version }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
