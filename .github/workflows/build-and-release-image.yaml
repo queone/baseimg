@@ -46,6 +46,7 @@ jobs:
         id: extract
         run: |
           IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
+          echo "Extracted image name: $IMAGE_NAME"  # Debugging log
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
@@ -60,6 +61,7 @@ jobs:
 
       - name: Build the Docker image with new tag
         run: |
+          echo "Building image: ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }}"  # Debugging log
           docker build -f ${{ github.event.inputs.dockerfile }} -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }} -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest .
 
       - name: Push the Docker images

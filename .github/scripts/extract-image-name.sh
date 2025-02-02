@@ -33,12 +33,10 @@ done < "$DOCKERFILE"
 # Extract and clean the "name" label
 IMAGE_NAME=$(echo "$LABEL_CONTENT" | grep -oE 'name=[^ ]+' | cut -d'=' -f2 | tr -d ' "')
 
-# Output the result or display an error message if "name" is not found
+# Output only the image name (without "IMAGE_NAME=" prefix)
 if [[ -n "$IMAGE_NAME" ]]; then
-    echo "IMAGE_NAME=$IMAGE_NAME"
+    echo "$IMAGE_NAME"
 else
     printf "${Red}No 'name' label found.${Rst}\n"
     exit 1
 fi
-
-exit 0
