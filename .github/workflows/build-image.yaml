@@ -8,9 +8,12 @@ on:
         required: false
         type: string
       dockerfile:
-        description: "Select the Dockerfile to use (e.g., Dockerfile.dev, Dockerfile.prod)"
+        description: "Select the Dockerfile to use"
         required: true
-        type: string
+        type: choice
+        options:
+          - Dockerfile.base
+          - Dockerfile.vault
 
 permissions:
   contents: write
