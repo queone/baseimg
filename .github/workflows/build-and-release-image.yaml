@@ -74,6 +74,10 @@ jobs:
           git tag ${{ env.TAG }}
           git push origin ${{ env.TAG }}
 
+      - name: Debug repository name
+        run: |
+          echo "Repository: ${{ github.repository }}"
+
       - name: Create GitHub Release with new tag
         run: |
           REPO="${{ github.repository }}"  # This dynamically gets the correct repo owner/name
