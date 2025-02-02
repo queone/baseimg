@@ -48,7 +48,12 @@ jobs:
           fi
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
 
+      - name: Debugging output
+        run: |
+          echo "IMAGE_NAME: '${{ env.IMAGE_NAME }}'"
+          echo "VERSION: '${{ github.event.inputs.version }}'"
+
       - name: Remove previously released image and package
-        run: .github/scripts/remove-image.sh ${{ env.IMAGE_NAME }} ${{ github.event.inputs.version }}
+        run: .github/scripts/remove-image.sh "${{ env.IMAGE_NAME }}" "${{ github.event.inputs.version }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
