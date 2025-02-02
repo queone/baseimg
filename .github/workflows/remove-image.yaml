@@ -10,6 +10,7 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
+          - Dockerfile.cntimage
       version:
         description: "Specify the version to remove (e.g., 1.0.0)"
         required: true

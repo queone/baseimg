@@ -1,0 +1,22 @@
+# Build locally with:
+#   docker build -f Dockerfile.base --no-cache -t local-image .
+
+# Use AlmaLinux minimal image as the base
+FROM almalinux/9-minimal
+
+# Add metadata to the image
+LABEL name="cntimage" \
+      description="Original."
+
+# Copy files to set up and install required packages, and clean up (customize layer scripts as needed)
+COPY *.sh requirements.txt /tmp/
+RUN /bin/bash /tmp/layer1.sh
+
+# Set the working directory
+WORKDIR /app
+
+# Add your application code or setup here
+# COPY . /app
+
+# Set the default command to run when the container starts
+CMD ["bash"]
