@@ -1,4 +1,6 @@
-name: Run Image Tests
+name: Test Image
+# Two separate jobs are neeeded because Gihtub doesn't support dynamically
+# getting the image_name and test_tag values.
 
 on:
   workflow_dispatch:
@@ -16,11 +18,12 @@ on:
         type: string
 
 jobs:
-  test-container:
+  extract-info:
+    # This job is to get the image_name and test_tag
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TEST_TAG }} # Directly use extracted values
-
+    outputs:
+      image_name: ${{ steps.extract.outputs.image_name }}
+      test_tag: ${{ steps.versioning.outputs.test_tag }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -28,19 +31,29 @@ jobs:
           fetch-depth: 0  # Ensure all tags are fetched
 
       - name: Extract image name from Dockerfile
+        id: extract
         run: |
           IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
       - name: Determine version tag
+        id: versioning
         run: |
           if [[ -n "${{ github.event.inputs.version }}" ]]; then
             TEST_TAG="${{ github.event.inputs.version }}"
           else
             TEST_TAG=$(.github/scripts/determine-version.sh)
           fi
-          echo "TEST_TAG=$TEST_TAG" >> $GITHUB_ENV
+          echo "test_tag=$TEST_TAG" >> $GITHUB_OUTPUT
 
+  test-container:
+    # This job uses image_name and test_tag to be tested 
+    runs-on: ubuntu-latest
+    needs: extract-info
+    container:
+      image: ghcr.io/queone/${{ needs.extract-info.outputs.image_name }}:${{ needs.extract-info.outputs.test_tag }}
+
+    steps:
       - name: Setup Go environment
         uses: actions/setup-go@v5
         with:
