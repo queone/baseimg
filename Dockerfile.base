@@ -5,7 +5,7 @@
 FROM almalinux/9-minimal
 
 # Add metadata to the image
-LABEL name="quebase" \
+LABEL name="que-base" \
       description="A minimal AlmaLinux image with custom setup."
 
 # Copy files to set up and install required packages, and clean up (customize layer scripts as needed)
