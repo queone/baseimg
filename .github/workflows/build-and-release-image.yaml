@@ -53,12 +53,15 @@ jobs:
           CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
           echo "Building image: ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}"  # Debugging log
+          echo "Building image for multi-arch platforms amd64/arm64"  # Debugging log
 
-          docker build -f ${{ github.event.inputs.dockerfile }} \
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            -f ${{ github.event.inputs.dockerfile }} \
             --label "org.opencontainers.image.source=${SOURCE_REPO}" \
             --label "org.opencontainers.image.created=${CREATED_DATE}" \
             -t ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION} \
-            -t ghcr.io/queone/${IMAGE_NAME}:latest .
+            -t ghcr.io/queone/${IMAGE_NAME}:latest \
+            --push .
 
       - name: Push the images to the registry
         run: |
