@@ -6,7 +6,7 @@ FROM almalinux/9-minimal
 
 # Add metadata to the image
 LABEL org.opencontainers.image.title="quevault" \
-      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.version="1.0.3" \
       org.opencontainers.image.description="A minimalist base image based on AlmaLinux 9 minimal image with Hashicorp Vault binary"
 
 # Copy files to set up and install required packages, and clean up (customize layer scripts as needed)
