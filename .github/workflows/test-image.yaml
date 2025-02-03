@@ -3,39 +3,52 @@ name: Test Image
 on:
   workflow_dispatch:
     inputs:
-      dockerfile:
-        description: "Select the Dockerfile to use"
+      image_url_path:
+        description: "Specify the full image URL path"
         required: true
         type: choice
         options:
-          - Dockerfile.base
-          - Dockerfile.vault
+          - ghcr.io/queone/quebase
+          - ghcr.io/queone/quevault
+      image_tag:
+        description: "Specify the tag to test (e.g., 1.0.3)"
+        required: true
+        type: string
 
 jobs:
-  extract-info:
-    # This job retrieves the image_name and image_version from the Dockerfile
+  detect-architectures:
     runs-on: ubuntu-latest
     outputs:
-      image_name: ${{ steps.extract.outputs.image_name }}
-      test_tag: ${{ steps.extract.outputs.image_version }}
+      archs: ${{ steps.detect.outputs.archs }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Extract image name and version from Dockerfile
-        id: extract
+      - name: Detect available architectures for the image
+        id: detect
         run: |
-          read IMAGE_NAME IMAGE_VERSION < <(.github/scripts/get-name-and-version.sh ${{ github.event.inputs.dockerfile }})
-          echo "Extracted image name: $IMAGE_NAME, version: $IMAGE_VERSION"  # Debugging log
-          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
-          echo "image_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+          IMAGE="${{ github.event.inputs.image_url_path }}:${{ github.event.inputs.image_tag }}"
+          echo "Inspecting image: $IMAGE"
+
+          INSPECT_OUTPUT=$(docker buildx imagetools inspect $IMAGE)
+          echo "$INSPECT_OUTPUT"
+
+          ARCHS=$(echo "$INSPECT_OUTPUT" | grep -oE 'linux/[a-z0-9]+' | sort -u | tr '\n' ' ')
+
+          if [[ -z "$ARCHS" ]]; then
+            echo "❌ No architectures found for $IMAGE"
+            exit 1
+          fi
+
+          echo "Detected architectures: $ARCHS"
+          echo "archs=$ARCHS" >> $GITHUB_OUTPUT
 
   test-container:
-    # This job runs the container and executes tests
     runs-on: ubuntu-latest
-    needs: extract-info
+    needs: detect-architectures
+    strategy:
+      matrix:
+        arch: ${{ fromJson(needs.detect-architectures.outputs.archs) }}
     container:
-      image: ghcr.io/queone/${{ needs.extract-info.outputs.image_name }}:${{ needs.extract-info.outputs.test_tag }}
+      image: ${{ github.event.inputs.image_url_path }}:${{ github.event.inputs.image_tag }}
+      options: "--platform ${{ matrix.arch }}"
 
     steps:
       - name: Setup Go environment
@@ -43,16 +56,16 @@ jobs:
         with:
           go-version: '1.23.4'
 
-      - name: Test COMMANDS
+      - name: Test COMMANDS for ${{ matrix.arch }}
         run: |
           set -e
           chmod +x /bin/sh || true
           Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
-          printf "${Gre}START${Rst}\n"
+          printf "${Gre}START (${{ matrix.arch }})${Rst}\n"
           git --version || echo "git not found"
           ls -l
           cat /etc/os-release
           uname -m
           go version || echo "go not found"
           vault version || echo "vault not found"
-          printf "${Red}END!${Rst}\n"
+          printf "${Red}END (${{ matrix.arch }})!${Rst}\n"

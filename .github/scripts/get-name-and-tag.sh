@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# get-name-and-version.sh
+# get-name-and-tag.sh
 
 set -euo pipefail
 Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
@@ -33,8 +33,8 @@ done < "$DOCKERFILE"
 # Extract and clean the OCI-compliant "org.opencontainers.image.title" label (image name)
 IMAGE_NAME=$(echo "$LABEL_CONTENT" | grep -oE 'org.opencontainers.image.title=[^ ]+' | cut -d'=' -f2 | tr -d ' "')
 
-# Extract and clean the OCI-compliant "org.opencontainers.image.version" label (image version)
-IMAGE_VERSION=$(echo "$LABEL_CONTENT" | grep -oE 'org.opencontainers.image.version=[^ ]+' | cut -d'=' -f2 | tr -d ' "')
+# Extract and clean the OCI-compliant "org.opencontainers.image.version" label (image tag)
+IMAGE_TAG=$(echo "$LABEL_CONTENT" | grep -oE 'org.opencontainers.image.version=[^ ]+' | cut -d'=' -f2 | tr -d ' "')
 
 # Validate extracted values
 if [[ -z "$IMAGE_NAME" ]]; then
@@ -42,9 +42,9 @@ if [[ -z "$IMAGE_NAME" ]]; then
     exit 1
 fi
 
-if [[ -z "$IMAGE_VERSION" ]]; then
-    IMAGE_VERSION="latest"  # Default to "latest" but don't print a warning message
+if [[ -z "$IMAGE_TAG" ]]; then
+    IMAGE_TAG="latest"  # Default to "latest" if no tag is found
 fi
 
 # Print both values on the same line to prevent `read` issues
-printf "%s %s\n" "$IMAGE_NAME" "$IMAGE_VERSION"
+printf "%s %s\n" "$IMAGE_NAME" "$IMAGE_TAG"

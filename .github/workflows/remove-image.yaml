@@ -10,8 +10,8 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
-      version:
-        description: "Specify the version to remove (e.g., 1.0.0)"
+      tag:
+        description: "Specify the tag to remove (e.g., 1.0.0)"
         required: true
         type: string
 
@@ -39,7 +39,7 @@ jobs:
       - name: Extract image name from Dockerfile
         id: extract
         run: |
-          read IMAGE_NAME _ < <(.github/scripts/get-name-and-version.sh ${{ github.event.inputs.dockerfile }})
+          read IMAGE_NAME _ < <(.github/scripts/get-name-and-tag.sh ${{ github.event.inputs.dockerfile }})
           echo "Extracted image name: $IMAGE_NAME"  # Debugging log
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
@@ -47,9 +47,9 @@ jobs:
       - name: Debugging output
         run: |
           echo "IMAGE_NAME: '${{ env.IMAGE_NAME }}'"
-          echo "VERSION (from input): '${{ github.event.inputs.version }}'"
+          echo "TAG (from input): '${{ github.event.inputs.tag }}'"
 
       - name: Remove previously released image and package
-        run: .github/scripts/remove-image.sh "${{ env.IMAGE_NAME }}" "${{ github.event.inputs.version }}"
+        run: .github/scripts/remove-image.sh "${{ env.IMAGE_NAME }}" "${{ github.event.inputs.tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

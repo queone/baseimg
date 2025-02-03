@@ -1,4 +1,4 @@
-name: Build and Release Image
+name: Build Image
 
 on:
   workflow_dispatch:
@@ -47,13 +47,12 @@ jobs:
           echo "IMAGE_NAME: '${{ env.IMAGE_NAME }}'"
           echo "IMAGE_VERSION: '${{ env.IMAGE_VERSION }}'"
 
-      - name: Build the image with auto-generated metadata
+      - name: Build and push the multi-arch image
         run: |
           SOURCE_REPO="https://github.com/${{ github.repository }}"
           CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          echo "Building image: ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}"  # Debugging log
-          echo "Building image for multi-arch platforms amd64/arm64"  # Debugging log
+          echo "Building image for multi-arch platforms: amd64/arm64"  # Debugging log
 
           docker buildx build --platform linux/amd64,linux/arm64 \
             -f ${{ github.event.inputs.dockerfile }} \
@@ -63,11 +62,6 @@ jobs:
             -t ghcr.io/queone/${IMAGE_NAME}:latest \
             --push .
 
-      - name: Push the images to the registry
-        run: |
-          docker push ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}
-          docker push ghcr.io/queone/${IMAGE_NAME}:latest
-
       - name: Verify pushed images in GHCR
         run: |
           echo "Checking images in GitHub Container Registry..."
@@ -76,10 +70,30 @@ jobs:
           IMAGE_REPO="ghcr.io/queone/${IMAGE_NAME}"
 
           echo "Fetching image tags for: $IMAGE_REPO"
-
           RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/orgs/queone/packages/container/${IMAGE_NAME}/versions")
 
           echo "GHCR API Response:"
           echo "$RESPONSE" | jq -r '.[] | {id: .id, created: .created_at, tags: .metadata.container.tags}'
+
+      - name: Verify Multi-Arch Support (Fail if Missing)
+        run: |
+          echo "Verifying multi-arch support for: ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}"
+          
+          INSPECT_OUTPUT=$(docker buildx imagetools inspect ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION})
+          
+          echo "$INSPECT_OUTPUT"
+
+          # Check if both architectures exist
+          if ! echo "$INSPECT_OUTPUT" | grep -q "linux/amd64"; then
+            echo "❌ Error: linux/amd64 architecture is missing!"
+            exit 1
+          fi
+
+          if ! echo "$INSPECT_OUTPUT" | grep -q "linux/arm64"; then
+            echo "❌ Error: linux/arm64 architecture is missing!"
+            exit 1
+          fi
+
+          echo "✅ Multi-arch verification passed: Both amd64 and arm64 are available!"
