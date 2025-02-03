@@ -15,12 +15,19 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read  # Needed because this is still a Private repo
+
 jobs:
   detect-architectures:
     runs-on: ubuntu-latest
     outputs:
       archs: ${{ steps.detect.outputs.archs }}
     steps:
+      - name: Authenticate with GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u queone --password-stdin
+
       - name: Detect available architectures for the image
         id: detect
         run: |
