@@ -1,4 +1,4 @@
-name: Test Image
+name: Run Image Tests
 
 on:
   workflow_dispatch:
@@ -16,45 +16,31 @@ on:
         type: string
 
 jobs:
-  test-image:
+  test-container:
     runs-on: ubuntu-latest
-    outputs:
-      latest_tag: ${{ steps.versioning.outputs.TEST_TAG }}  # Expose tag to next job
-      image_name: ${{ steps.extract.outputs.IMAGE_NAME }}
+    container:
+      image: ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TEST_TAG }} # Directly use extracted values
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure all tags are fetched
-          ref: main
 
       - name: Extract image name from Dockerfile
-        id: extract
         run: |
           IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_OUTPUT
 
-      - name: Get latest tag if not specified
-        id: versioning
+      - name: Determine version tag
         run: |
           if [[ -n "${{ github.event.inputs.version }}" ]]; then
             TEST_TAG="${{ github.event.inputs.version }}"
           else
             TEST_TAG=$(.github/scripts/determine-version.sh)
           fi
-
-          echo "TEST_TAG=$TEST_TAG"
           echo "TEST_TAG=$TEST_TAG" >> $GITHUB_ENV
-          echo "TEST_TAG=$TEST_TAG" >> $GITHUB_OUTPUT
 
-  test-container:
-    runs-on: ubuntu-latest
-    needs: test-image
-    container:
-      image: ghcr.io/queone/${{ needs.test-image.outputs.image_name }}:${{ needs.test-image.outputs.latest_tag }} # Use extracted image name and latest tag
-
-    steps:
       - name: Setup Go environment
         uses: actions/setup-go@v5
         with:
@@ -62,8 +48,8 @@ jobs:
 
       - name: Test COMMANDS
         run: |
-          set -e  # Fail if any command fails
-          chmod +x /bin/sh || true  # Ensure shell is executable
+          set -e
+          chmod +x /bin/sh || true
           Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           printf "${Gre}START${Rst}\n"
           git --version || echo "git not found"
