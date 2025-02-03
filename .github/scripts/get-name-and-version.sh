@@ -43,10 +43,8 @@ if [[ -z "$IMAGE_NAME" ]]; then
 fi
 
 if [[ -z "$IMAGE_VERSION" ]]; then
-    printf "${Yel}Warning: No 'org.opencontainers.image.version' label found. Defaulting to 'latest'.${Rst}\n"
-    IMAGE_VERSION="latest"
+    IMAGE_VERSION="latest"  # Default to "latest" but don't print a warning message
 fi
 
-# Output results
-echo "IMAGE_NAME=$IMAGE_NAME"
-echo "IMAGE_VERSION=$IMAGE_VERSION"
+# Print both values on the same line to prevent `read` issues
+printf "%s %s\n" "$IMAGE_NAME" "$IMAGE_VERSION"
