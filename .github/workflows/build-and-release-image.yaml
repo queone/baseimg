@@ -12,7 +12,7 @@ on:
           - Dockerfile.vault
 
 permissions:
-#  contents: read  # Needed because this is still a Private repo
+  contents: read  # Needed because this is still a Private repo
   packages: write # Needed to push images to GitHub Container Registry 
 
 jobs:
