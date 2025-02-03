@@ -34,8 +34,9 @@ if [[ -z "$VERSION_ID" ]]; then
   exit 1
 fi
 
-# Count the number of versions
-VERSION_COUNT=$(echo "$RESPONSE" | jq -r '. | length')
+# Count only versions that have at least one tag
+VERSION_COUNT=$(echo "$RESPONSE" | jq -r '[.[] | select(.metadata.container.tags | length > 0)] | length')
+
 
 # Delete the specific version
 echo "Deleting image ID: $VERSION_ID for version: $VERSION"
