@@ -22,7 +22,7 @@ jobs:
   detect-architectures:
     runs-on: ubuntu-latest
     outputs:
-      archs: ${{ steps.detect.outputs.archs }}
+      archs: ${{ steps.detect.outputs.archs || 'linux/amd64' }}  # Default to amd64 if empty
     steps:
       - name: Authenticate with GitHub Container Registry
         run: |
