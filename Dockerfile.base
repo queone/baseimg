@@ -9,15 +9,17 @@ LABEL org.opencontainers.image.title="quebase" \
       org.opencontainers.image.version="1.0.4" \
       org.opencontainers.image.description="A minimalist base image based on AlmaLinux 9 minimal image"
 
-# Copy files to set up and install required packages, and clean up (customize layer scripts as needed)
+# Copy setup files
 COPY *.sh requirements.txt /tmp/
-RUN /bin/bash /tmp/layer1.sh
 
-# Set the working directory
-WORKDIR /app
+# Set up and install required packages. Customize layer scripts as needed.
+RUN /bin/bash /tmp/layer1.sh
 
 # Add your application code or setup here
 # COPY . /app
+
+# Set the working directory
+WORKDIR /app
 
 # Set the default command to run when the container starts
 CMD ["bash"]
