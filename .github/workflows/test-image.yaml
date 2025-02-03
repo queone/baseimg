@@ -1,6 +1,4 @@
 name: Test Image
-# Two separate jobs are neeeded because Gihtub doesn't support dynamically
-# getting the image_name and test_tag values.
 
 on:
   workflow_dispatch:
@@ -12,42 +10,28 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
-      version:
-        description: "Specify the version to test (e.g., 1.0.0, leave empty for latest)"
-        required: false
-        type: string
 
 jobs:
   extract-info:
-    # This job is to get the image_name and test_tag
+    # This job retrieves the image_name and image_version from the Dockerfile
     runs-on: ubuntu-latest
     outputs:
       image_name: ${{ steps.extract.outputs.image_name }}
-      test_tag: ${{ steps.versioning.outputs.test_tag }}
+      test_tag: ${{ steps.extract.outputs.image_version }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Ensure all tags are fetched
 
-      - name: Extract image name from Dockerfile
+      - name: Extract image name and version from Dockerfile
         id: extract
         run: |
-          IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
+          read IMAGE_NAME IMAGE_VERSION < <(.github/scripts/get-name-and-version.sh ${{ github.event.inputs.dockerfile }})
+          echo "Extracted image name: $IMAGE_NAME, version: $IMAGE_VERSION"  # Debugging log
           echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
-
-      - name: Determine version tag
-        id: versioning
-        run: |
-          if [[ -n "${{ github.event.inputs.version }}" ]]; then
-            TEST_TAG="${{ github.event.inputs.version }}"
-          else
-            TEST_TAG=$(.github/scripts/determine-version.sh)
-          fi
-          echo "test_tag=$TEST_TAG" >> $GITHUB_OUTPUT
+          echo "image_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
 
   test-container:
-    # This job uses image_name and test_tag to be tested 
+    # This job runs the container and executes tests
     runs-on: ubuntu-latest
     needs: extract-info
     container:

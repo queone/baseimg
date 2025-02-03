@@ -3,10 +3,6 @@ name: Build and Release Image
 on:
   workflow_dispatch:
     inputs:
-      tag_name:
-        description: "Specify the new tag (leave empty for auto-increment)"
-        required: false
-        type: string
       dockerfile:
         description: "Select the Dockerfile to use"
         required: true
@@ -16,15 +12,11 @@ on:
           - Dockerfile.vault
 
 permissions:
-  contents: write
-  packages: write
+  packages: write # Needed to push images to GitHub Container Registry 
 
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.versioning.outputs.TAG }}
-      image_name: ${{ steps.extract.outputs.image_name }}
     steps:
 
       - name: Set up Docker Buildx
@@ -32,8 +24,6 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0  # Ensure we fetch all tags
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3.3.0
@@ -42,55 +32,43 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract image name from Dockerfile
-        id: extract
+      - name: Extract image name and version from Dockerfile
         run: |
-          IMAGE_NAME=$(.github/scripts/extract-image-name.sh ${{ github.event.inputs.dockerfile }})
-          echo "Extracted image name: $IMAGE_NAME"  # Debugging log
+          read IMAGE_NAME IMAGE_VERSION < <(.github/scripts/get-name-and-version.sh ${{ github.event.inputs.dockerfile }})
+          echo "Extracted image name: $IMAGE_NAME, version: $IMAGE_VERSION"  # Debugging log
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+          echo "IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
 
-      - name: Determine new version
-        id: versioning
+      - name: Build the image with auto-generated metadata
         run: |
-          NEW_TAG=$(GITHUB_TAG_NAME="${{ github.event.inputs.tag_name }}" .github/scripts/determine-version.sh)
-          echo "Latest tag: ${LATEST_TAG:-none}"
-          echo "New tag: $NEW_TAG"
-          echo "TAG=$NEW_TAG" >> $GITHUB_ENV
-          echo "TAG=$NEW_TAG" >> $GITHUB_OUTPUT
+          SOURCE_REPO="https://github.com/${{ github.repository }}"
+          CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-      - name: Build the Docker image with new tag
+          echo "Building image: ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}"  # Debugging log
+
+          docker build -f ${{ github.event.inputs.dockerfile }} \
+            --label "org.opencontainers.image.source=${SOURCE_REPO}" \
+            --label "org.opencontainers.image.created=${CREATED_DATE}" \
+            -t ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION} \
+            -t ghcr.io/queone/${IMAGE_NAME}:latest .
+
+      - name: Push the images to the registry
         run: |
-          echo "Building image: ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }}"  # Debugging log
-          docker build -f ${{ github.event.inputs.dockerfile }} -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }} -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest .
+          docker push ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}
+          docker push ghcr.io/queone/${IMAGE_NAME}:latest
 
-      - name: Push the Docker images
+      - name: Verify pushed images in GHCR
         run: |
-          docker push ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.TAG }}
-          docker push ghcr.io/queone/${{ env.IMAGE_NAME }}:latest
+          echo "Checking images in GitHub Container Registry..."
 
-      - name: Create and push Git tag
-        run: |
-          git tag ${{ env.TAG }}
-          git push origin ${{ env.TAG }}
+          TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          IMAGE_REPO="ghcr.io/queone/${IMAGE_NAME}"
 
-      - name: Debug repository name
-        run: |
-          echo "Repository: ${{ github.repository }}"
+          echo "Fetching image tags for: $IMAGE_REPO"
 
-      - name: Create GitHub Release with new tag
-        run: |
-          REPO="${{ github.repository }}"  # This dynamically gets the correct repo owner/name
-          echo "Creating release in: $REPO"
-
-          RESPONSE=$(curl -s -o response.json -w "%{http_code}" -X POST \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/$REPO/releases" \
-            -d "{\"tag_name\": \"${{ env.TAG }}\", \"name\": \"Release ${{ env.TAG }}\", \"body\": \"Auto-generated release for version ${{ env.TAG }}\", \"draft\": false, \"prerelease\": false}")
+            "https://api.github.com/orgs/queone/packages/container/${IMAGE_NAME}/versions")
 
-          if [[ "$RESPONSE" -ne 201 ]]; then
-            echo "❌ Failed to create GitHub Release! Response code: $RESPONSE"
-            cat response.json
-            exit 1
-          fi
+          echo "GHCR API Response:"
+          echo "$RESPONSE" | jq -r '.[] | {id: .id, created: .created_at, tags: .metadata.container.tags}'
