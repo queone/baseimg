@@ -1,5 +1,5 @@
-# Build locally with:
-#   docker build -f Dockerfile.base --no-cache -t localquebase .
+# Test build locally with:
+#   docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.base -t localquebase:latest .
 
 # Use AlmaLinux minimal image as the base
 FROM almalinux/9-minimal

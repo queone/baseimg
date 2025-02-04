@@ -1,5 +1,5 @@
-# Build locally with:
-#   docker build -f Dockerfile.vault --no-cache -t localquevault .
+# Test build locally with:
+#   docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.vault -t localquevault:latest .
 
 # Use AlmaLinux minimal image as the base
 FROM almalinux/9-minimal
