@@ -37,14 +37,13 @@ jobs:
       - name: Detect available architectures for the image
         id: detect
         run: |
+          Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           ARCHS=$(.github/scripts/detect-arch.sh "${{ github.event.inputs.image_url_path }}" "${{ github.event.inputs.image_tag }}")
           echo "archs=$ARCHS" >> $GITHUB_OUTPUT
-
-      - name: Debug Output
-        run: |
-          echo "🔍 Image URL: ${{ github.event.inputs.image_url_path }}"
-          echo "🔖 Image Tag: ${{ github.event.inputs.image_tag }}"
-          echo "🖥️ Detected Architectures: '${{ steps.detect.outputs.archs }}'"
+          # DEBUG OUTPUT
+          printf "Image URL: ${Yel}${{ github.event.inputs.image_url_path }}${Rst}"
+          printf "Image Tag: ${Yel}${{ github.event.inputs.image_tag }}${Rst}"
+          printf "Detected Architectures: ${Yel}$ARCHS${Rst}"
 
   test-container:
     runs-on: ubuntu-latest
