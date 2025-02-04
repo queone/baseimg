@@ -2,25 +2,28 @@
 # detect-arch.sh
 
 set -euo pipefail
+Gre='\e[1;32m' Red='\e[1;31m' Yel='\e[1;33m' Rst='\e[0m'
 
-IMAGE="$1:$2"
-
-echo "Inspecting image: $IMAGE"
-
-# Check if the image exists
-if ! docker buildx imagetools inspect "$IMAGE" > /tmp/image_inspect.json 2>/dev/null; then
-  echo "❌ Image $IMAGE does not exist or is not accessible!"
+# Check for correct number of arguments
+if [[ $# -ne 2 ]]; then
+  printf "Usage: ${Yel}$0${Rst} <image_url_path> <image_tag>\n"
   exit 1
 fi
 
-# Extract architectures using jq (more robust)
-ARCHS=$(jq -r '.manifests[].platform | select(.architecture) | "linux/" + .architecture' /tmp/image_inspect.json | sort -u | tr '\n' ' ')
+IMAGE="$1:$2"
 
-# Handle single-arch images (if no architectures found)
-if [[ -z "$ARCHS" ]]; then
-  echo "⚠️ No architectures found in manifest. Assuming single-arch (linux/amd64)."
-  ARCHS="linux/amd64"
+# Inspect the image and extract manifests
+INSPECT=$(docker buildx imagetools inspect --raw "$IMAGE" 2>&1 || true)
+MANIFESTS=$(echo "$INSPECT" | jq -c '.manifests // []')
+
+# Default architecture if no manifests are found
+if [[ "$MANIFESTS" == "[]" ]]; then
+  ARCHS="linux/amd64" # Assume Linux X86_64
+else
+  # Extract valid platforms
+  ARCHS=$(echo "$MANIFESTS" | jq -r '.[] | select(.platform.architecture != "unknown" and .platform.os != "unknown") | "\(.platform.os)/\(.platform.architecture)"' | xargs)
 fi
 
-echo "Detected architectures: $ARCHS"
-echo "archs=$ARCHS" >> "$GITHUB_OUTPUT"
+# Print the architectures
+printf "$ARCHS" # Without newline so it works when passed to $GITHUB_OUTPUT in the workflow
+exit 0
