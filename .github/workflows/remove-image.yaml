@@ -10,7 +10,7 @@ on:
         options:
           - Dockerfile.base
           - Dockerfile.vault
-      tag:
+      image_tag:
         description: "Specify the tag to remove (e.g., 1.0.0)"
         required: true
         type: string
@@ -47,9 +47,9 @@ jobs:
       - name: Debugging output
         run: |
           echo "IMAGE_NAME: '${{ env.IMAGE_NAME }}'"
-          echo "TAG (from input): '${{ github.event.inputs.tag }}'"
+          echo "TAG (from input): '${{ github.event.inputs.image_tag }}'"
 
       - name: Remove previously released image and package
-        run: .github/scripts/remove-image.sh "${{ env.IMAGE_NAME }}" "${{ github.event.inputs.tag }}"
+        run: .github/scripts/remove-image.sh "${{ env.IMAGE_NAME }}" "${{ github.event.inputs.image_tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

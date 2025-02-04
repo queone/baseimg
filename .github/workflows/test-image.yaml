@@ -35,18 +35,19 @@ jobs:
 
       - name: Test commands
         run: |
-          Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
-          printf "${Gre}START (${{ matrix.arch }})${Rst}\n"
-          printf "${Blu}=============${Rst}\n"
+          Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
+          printf "==> ${Gre}START${Rst}\n"
+          printf "==> Testing image: ${Blu}${{ github.event.inputs.image_url_path }}:${{ github.event.inputs.image_tag }}${Rst}\n"
+          printf "==> ${Blu}git --version${Rst}\n"
           git --version || echo "git not found"
-          printf "${Blu}=============${Rst}\n"
+          printf "==> ${Blu}ls -l .${Rst}\n"
           ls -l .
-          printf "${Blu}=============${Rst}\n"
+          printf "==> ${Blu}cat /etc/os-release${Rst}\n"
           cat /etc/os-release
-          printf "${Blu}=============${Rst}\n"
+          printf "==> ${Blu}uname -m${Rst}\n"
           uname -m
-          printf "${Blu}=============${Rst}\n"
+          printf "==> ${Blu}go version${Rst}\n"
           go version || echo "go not found"
-          printf "${Blu}=============${Rst}\n"
+          printf "==> ${Blu}vault version${Rst}\n"
           /usr/bin/vault version || echo "/usr/bin/vault not found"
-          printf "${Red}END (${{ matrix.arch }})!${Rst}\n"
+          printf "==> ${Red}END${Rst}\n"
