@@ -40,7 +40,7 @@ jobs:
           printf "${Blu}=============${Rst}\n"
           git --version || echo "git not found"
           printf "${Blu}=============${Rst}\n"
-          ls -l
+          ls -l .
           printf "${Blu}=============${Rst}\n"
           cat /etc/os-release
           printf "${Blu}=============${Rst}\n"
@@ -48,5 +48,5 @@ jobs:
           printf "${Blu}=============${Rst}\n"
           go version || echo "go not found"
           printf "${Blu}=============${Rst}\n"
-          vault version || echo "vault not found"
+          /usr/bin/vault version || echo "/usr/bin/vault not found"
           printf "${Red}END (${{ matrix.arch }})!${Rst}\n"
