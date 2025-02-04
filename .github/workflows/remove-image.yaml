@@ -16,8 +16,8 @@ on:
         type: string
 
 permissions:
-  contents: read  # Needed because this is still a Private repo
-  packages: write # Needed to delete images from GitHub Container Registry
+  contents: read  # Required to checkout private repo
+  packages: write # Required to delete images from GitHub Container Registry
 
 jobs:
   remove_image:

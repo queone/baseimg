@@ -16,6 +16,7 @@ on:
         type: string
 
 permissions:
+  contents: read  # Required to checkout private repo
   packages: read  # Required to pull private container images from GHCR
 
 jobs:
