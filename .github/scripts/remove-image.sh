@@ -2,7 +2,7 @@
 # remove-image.sh
 
 set -euo pipefail
-Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
+Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
 
 if [[ $# -ne 2 ]]; then
   echo "Usage: $0 <package-name> <tag>"

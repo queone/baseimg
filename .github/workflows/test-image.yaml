@@ -28,6 +28,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
+    
       - name: Setup Go environment
         uses: actions/setup-go@v5
         with:

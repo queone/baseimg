@@ -1,5 +1,5 @@
 # Build locally with:
-#   docker build -f Dockerfile.base --no-cache -t localquevault .
+#   docker build -f Dockerfile.vault --no-cache -t localquevault .
 
 # Use AlmaLinux minimal image as the base
 FROM almalinux/9-minimal
@@ -13,7 +13,8 @@ LABEL org.opencontainers.image.title="quevault" \
 COPY *.sh requirements.txt /tmp/
 
 # Set up and install required packages. Customize layer scripts as needed.
-RUN /bin/bash /tmp/layer1.sh && /bin/bash /tmp/layer2.sh
+RUN /bin/bash /tmp/layer1.sh
+RUN /bin/bash /tmp/layer2.sh
 
 # Add your application code or setup here
 # COPY . /app

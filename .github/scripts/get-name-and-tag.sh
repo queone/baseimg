@@ -2,7 +2,7 @@
 # get-name-and-tag.sh
 
 set -euo pipefail
-Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
+Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
 
 # Ensure a Dockerfile argument is provided
 [[ $# -ne 1 ]] && { echo "Usage: $0 <Dockerfile>"; exit 1; }
