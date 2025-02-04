@@ -18,12 +18,10 @@ MANIFESTS=$(echo "$INSPECT" | jq -c '.manifests // []')
 
 # Default architecture if no manifests are found
 if [[ "$MANIFESTS" == "[]" ]]; then
-  ARCHS="linux/amd64" # Assume Linux X86_64
+  printf '["linux/amd64"]' # Output JSON array directly
 else
-  # Extract valid platforms
-  ARCHS=$(echo "$MANIFESTS" | jq -r '.[] | select(.platform.architecture != "unknown" and .platform.os != "unknown") | "\(.platform.os)/\(.platform.architecture)"' | xargs)
+  # Extract valid platforms and format as a JSON array
+  echo "$MANIFESTS" | jq -c '[.[] | select(.platform.architecture != "unknown" and .platform.os != "unknown") | "\(.platform.os)/\(.platform.architecture)"]'
 fi
 
-# Print the architectures
-printf "$ARCHS" # Without newline so it works when passed to $GITHUB_OUTPUT in the workflow
 exit 0
