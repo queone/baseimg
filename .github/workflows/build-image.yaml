@@ -35,99 +35,45 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract image name and version from Dockerfile
+      - name: Extract image name and tag from Dockerfile
         run: |
-          read IMAGE_NAME IMAGE_VERSION < <(.github/scripts/get-name-and-version.sh ${{ github.event.inputs.dockerfile }})
-          echo "Extracted image name: $IMAGE_NAME, version: $IMAGE_VERSION"  # Debugging log
+          read IMAGE_NAME IMAGE_TAG < <(.github/scripts/get-name-and-tag.sh ${{ github.event.inputs.dockerfile }})
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "IMAGE_VERSION=$IMAGE_VERSION" >> $GITHUB_ENV
-
-      - name: DEBUG - image name and version
-        run: |
-          echo "IMAGE_NAME: '${{ env.IMAGE_NAME }}'"
-          echo "IMAGE_VERSION: '${{ env.IMAGE_VERSION }}'"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          # DEBUG OUTPUT
+          printf "==> IMAGE_NAME: ${Blu}$IMAGE_NAME${Rst}\n"
+          printf "==> IMAGE_TAG : ${Blu}$IMAGE_TAG${Rst}\n"
 
       - name: Build and push the multi-arch image
         run: |
           SOURCE_REPO="https://github.com/${{ github.repository }}"
           CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          echo "Building image for multi-arch platforms: amd64/arm64"  # Debugging log
+          # DEBUG OUTPUT
+          printf "==> ${Blu}docker buildx build --platform linux/amd64,linux/arm64 \
+            -f ${{ github.event.inputs.dockerfile }} \
+            --label "org.opencontainers.image.source=${SOURCE_REPO}" \
+            --label "org.opencontainers.image.created=${CREATED_DATE}" \
+            -t ghcr.io/queone/${IMAGE_NAME}:${IMAGE_TAG} \
+            -t ghcr.io/queone/${IMAGE_NAME}:latest \
+            --push .${Rst}\n"
 
           docker buildx build --platform linux/amd64,linux/arm64 \
             -f ${{ github.event.inputs.dockerfile }} \
             --label "org.opencontainers.image.source=${SOURCE_REPO}" \
             --label "org.opencontainers.image.created=${CREATED_DATE}" \
-            -t ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION} \
-            -t ghcr.io/queone/${IMAGE_NAME}:latest \
+            -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
+            -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest \
             --push .
 
-      # - name: Docker meta
-      #   id: <meta_id> # you'll use this in the next step
-      #   uses: docker/metadata-action@v3
-      #   with:
-      #     # list of Docker images to use as base name for tags
-      #     images: |
-      #       <specify the image name>
-      #     # Docker tags based on the following events/attributes
-      #     tags: |
-      #       type=schedule
-      #       type=ref,event=branch
-      #       type=ref,event=pr
-      #       type=semver,pattern={{version}}
-      #       type=semver,pattern={{major}}.{{minor}}
-      #       type=semver,pattern={{major}}
-      #       type=sha
-
-      # - name: Build and push
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     context: .
-      #     platforms: linux/amd64,linux/arm/v7
-      #     push: ${{ github.event_name != 'pull_request' }}
-      #     tags: ${{ steps.<meta_id>.outputs.tags }}
-      #     labels: ${{ steps.<meta_id>.outputs.labels }}
-
-      # 2nd example
-      # - name: Build and Push Image
-      #   uses: docker/build-push-action@v6
-      #   with:
-      #     tags: quay.io/siddhesh_ghadi/multi-arch-gha:latest
-      #     platforms: linux/amd64,linux/arm64
-      #     push: true
-
-      - name: Verify pushed images in GHCR
-        run: |
-          echo "Checking images in GitHub Container Registry..."
-
-          TOKEN="${{ secrets.GITHUB_TOKEN }}"
-          IMAGE_REPO="ghcr.io/queone/${IMAGE_NAME}"
-
-          echo "Fetching image tags for: $IMAGE_REPO"
-          RESPONSE=$(curl -s -H "Authorization: Bearer $TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/orgs/queone/packages/container/${IMAGE_NAME}/versions")
-
-          echo "GHCR API Response:"
-          echo "$RESPONSE" | jq -r '.[] | {id: .id, created: .created_at, tags: .metadata.container.tags}'
-
-      - name: Verify Multi-Arch Support (Fail if Missing)
-        run: |
-          echo "Verifying multi-arch support for: ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION}"
-          
-          INSPECT_OUTPUT=$(docker buildx imagetools inspect ghcr.io/queone/${IMAGE_NAME}:${IMAGE_VERSION})
-          
-          echo "$INSPECT_OUTPUT"
-
-          # Check if both architectures exist
-          if ! echo "$INSPECT_OUTPUT" | grep -q "linux/amd64"; then
-            echo "❌ Error: linux/amd64 architecture is missing!"
-            exit 1
-          fi
-
-          if ! echo "$INSPECT_OUTPUT" | grep -q "linux/arm64"; then
-            echo "❌ Error: linux/arm64 architecture is missing!"
-            exit 1
-          fi
-
-          echo "✅ Multi-arch verification passed: Both amd64 and arm64 are available!"
+      - name: Trigger Test Image Workflow
+        if: success()  # Only trigger if the build was successful
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          repository: ${{ github.repository }}
+          event-type: test-image
+          client-payload: |
+            {
+              "image_name": "${{ env.IMAGE_NAME }}",
+              "image_tag": "${{ env.IMAGE_TAG }}"
+            }

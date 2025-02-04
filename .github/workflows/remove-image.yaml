@@ -42,7 +42,7 @@ jobs:
           read IMAGE_NAME _ < <(.github/scripts/get-name-and-tag.sh ${{ github.event.inputs.dockerfile }})
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           # DEBUG OUTPUT
-          printf "==> IMAGE_NAME: ${Blu}${{ env.IMAGE_NAME }}${Rst}\n"
+          printf "==> IMAGE_NAME: ${Blu}$IMAGE_NAME${Rst}\n"
           printf "==> IMAGE_TAG : ${Blu}${{ github.event.inputs.image_tag }}${Rst}\n"
 
       - name: Remove image and package
