@@ -22,30 +22,28 @@ jobs:
   detect-architectures:
     runs-on: ubuntu-latest
     outputs:
-      archs: ${{ steps.detect.outputs.archs || 'linux/amd64' }}  # Default to amd64 if empty
+      archs: ${{ steps.detect.outputs.archs }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0  # Ensure we fetch all branches
+
       - name: Authenticate with GitHub Container Registry
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u queone --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Detect available architectures for the image
         id: detect
         run: |
-          IMAGE="${{ github.event.inputs.image_url_path }}:${{ github.event.inputs.image_tag }}"
-          echo "Inspecting image: $IMAGE"
-
-          INSPECT_OUTPUT=$(docker buildx imagetools inspect $IMAGE)
-          echo "$INSPECT_OUTPUT"
-
-          ARCHS=$(echo "$INSPECT_OUTPUT" | grep -oE 'linux/[a-z0-9]+' | sort -u | tr '\n' ' ')
-
-          if [[ -z "$ARCHS" ]]; then
-            echo "❌ No architectures found for $IMAGE"
-            exit 1
-          fi
-
-          echo "Detected architectures: $ARCHS"
+          ARCHS=$(.github/scripts/detect-arch.sh "${{ github.event.inputs.image_url_path }}" "${{ github.event.inputs.image_tag }}")
           echo "archs=$ARCHS" >> $GITHUB_OUTPUT
+
+      - name: Debug Output
+        run: |
+          echo "🔍 Image URL: ${{ github.event.inputs.image_url_path }}"
+          echo "🔖 Image Tag: ${{ github.event.inputs.image_tag }}"
+          echo "🖥️ Detected Architectures: '${{ steps.detect.outputs.archs }}'"
 
   test-container:
     runs-on: ubuntu-latest
@@ -63,10 +61,8 @@ jobs:
         with:
           go-version: '1.23.4'
 
-      - name: Test COMMANDS for ${{ matrix.arch }}
+      - name: Test COMMANDS
         run: |
-          set -e
-          chmod +x /bin/sh || true
           Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           printf "${Gre}START (${{ matrix.arch }})${Rst}\n"
           git --version || echo "git not found"
