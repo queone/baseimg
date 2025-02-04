@@ -12,7 +12,7 @@ on:
           - Dockerfile.vault
 
 permissions:
-  contents: read  # Required to checkout private repo
+  contents: write # Required to trigger repository dispatch
   packages: write # Required to delete images from GitHub Container Registry
 
 jobs:
