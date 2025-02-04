@@ -71,6 +71,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v1
         with:
           repository: ${{ github.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           event-type: test-image
           client-payload: |
             {
