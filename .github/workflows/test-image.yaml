@@ -26,13 +26,16 @@ jobs:
       archs: ${{ steps.detect.outputs.archs }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure we fetch all branches
 
-      - name: Authenticate with GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Detect available architectures for the image
         id: detect
@@ -54,13 +57,12 @@ jobs:
     container:
       image: ${{ github.event.inputs.image_url_path }}:${{ github.event.inputs.image_tag }}
       options: "--platform ${{ matrix.arch }}"
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - name: Authenticate with GitHub Container Registry
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
       - name: Setup Go environment
-        uses: actions/setup-go@v5.3.0
+        uses: actions/setup-go@v5
         with:
           go-version: '1.23.4'
 
@@ -68,10 +70,16 @@ jobs:
         run: |
           Gre='\e[1;32m' Red='\e[1;31m' Pur='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           printf "${Gre}START (${{ matrix.arch }})${Rst}\n"
+          printf "${Blu}=============${Rst}\n"
           git --version || echo "git not found"
+          printf "${Blu}=============${Rst}\n"
           ls -l
+          printf "${Blu}=============${Rst}\n"
           cat /etc/os-release
+          printf "${Blu}=============${Rst}\n"
           uname -m
+          printf "${Blu}=============${Rst}\n"
           go version || echo "go not found"
+          printf "${Blu}=============${Rst}\n"
           vault version || echo "vault not found"
           printf "${Red}END (${{ matrix.arch }})!${Rst}\n"
