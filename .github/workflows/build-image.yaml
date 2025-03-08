@@ -15,6 +15,9 @@ permissions:
   contents: write # Required to trigger repository dispatch
   packages: write # Required to delete images from GitHub Container Registry
 
+env:
+  DOCKER_BUILDKIT: 1 # Enable BuildKit
+
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
@@ -38,33 +41,30 @@ jobs:
       - name: Extract image name and tag from Dockerfile
         run: |
           read IMAGE_NAME IMAGE_TAG < <(.github/scripts/get-name-and-tag.sh ${{ github.event.inputs.dockerfile }})
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          printf "IMAGE_NAME=$IMAGE_NAME\n" >> $GITHUB_OUTPUT
+          printf "IMAGE_TAG=$IMAGE_TAG\n" >> $GITHUB_OUTPUT
           # DEBUG OUTPUT
-          printf "==> IMAGE_NAME: ${Blu}$IMAGE_NAME${Rst}\n"
-          printf "==> IMAGE_TAG : ${Blu}$IMAGE_TAG${Rst}\n"
+          printf "==> IMAGE_NAME = ${Blu}$IMAGE_NAME${Rst}\n"
+          printf "==> IMAGE_TAG  = ${Blu}$IMAGE_TAG${Rst}\n"
 
-      - name: Build and push the multi-arch image
+      - name: Build the Docker image
         run: |
           SOURCE_REPO="https://github.com/${{ github.repository }}"
           CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          # DEBUG OUTPUT
-          printf "==> ${Blu}docker buildx build --platform linux/amd64,linux/arm64 \
-            -f ${{ github.event.inputs.dockerfile }} \
-            --label "org.opencontainers.image.source=${SOURCE_REPO}" \
-            --label "org.opencontainers.image.created=${CREATED_DATE}" \
-            -t ghcr.io/queone/${IMAGE_NAME}:${IMAGE_TAG} \
-            -t ghcr.io/queone/${IMAGE_NAME}:latest \
-            --push .${Rst}\n"
-
-          docker buildx build --platform linux/amd64,linux/arm64 \
+          BuildCommand="docker buildx build \
             -f ${{ github.event.inputs.dockerfile }} \
             --label "org.opencontainers.image.source=${SOURCE_REPO}" \
             --label "org.opencontainers.image.created=${CREATED_DATE}" \
             -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
             -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest \
-            --push .
+            --push ."
+          printf "==> ${Blu}$BuildCommand${Rst}\n"
+          $BuildCommand
+
+      - name: Push the Docker image
+        run: |
+          docker push ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          docker push ghcr.io/queone/${{ env.IMAGE_NAME }}:latest
 
       - name: Trigger Test Image Workflow
         if: success()  # Only trigger if the build was successful

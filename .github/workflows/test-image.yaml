@@ -35,12 +35,12 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             # Use manual input values
-            echo "image_url_path=${{ github.event.inputs.image_url_path }}" >> $GITHUB_OUTPUT
-            echo "image_tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+            printf "image_url_path=${{ github.event.inputs.image_url_path }}\n" >> $GITHUB_OUTPUT
+            printf "image_tag=${{ github.event.inputs.image_tag }}\n" >> $GITHUB_OUTPUT
           else
             # Use values passed from another caller workflow
-            echo "image_url_path=ghcr.io/queone/${{ github.event.workflow_run.inputs.image_name }}" >> $GITHUB_OUTPUT
-            echo "image_tag=${{ github.event.workflow_run.inputs.image_tag }}" >> $GITHUB_OUTPUT
+            printf "image_url_path=ghcr.io/queone/${{ github.event.workflow_run.inputs.image_name }}\n" >> $GITHUB_OUTPUT
+            printf "image_tag=${{ github.event.workflow_run.inputs.image_tag }}\n" >> $GITHUB_OUTPUT
           fi
 
   test-container:

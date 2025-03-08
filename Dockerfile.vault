@@ -1,13 +1,13 @@
 # Test build locally with:
-#   docker buildx build --platform linux/amd64,linux/arm64 -f Dockerfile.vault -t localquevault:latest .
+#   docker buildx build  -f Dockerfile.vault -t quevault .
 
 # Use AlmaLinux minimal image as the base
 FROM almalinux/9-minimal
 
 # Add metadata to the image
 LABEL org.opencontainers.image.title="quevault" \
-      org.opencontainers.image.version="1.0.4" \
-      org.opencontainers.image.description="A minimalist base image based on AlmaLinux 9 minimal image with Hashicorp Vault binary"
+      org.opencontainers.image.version="1.0.5" \
+      org.opencontainers.image.description="A minimalist AlmaLinux 9 base image, with Hashicorp Vault binary"
 
 # Copy setup files
 COPY *.sh requirements.txt /tmp/

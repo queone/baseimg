@@ -1,29 +1,25 @@
-## cntimage
-
-Source to build custom Docker **container images**.
+## baseimg
+Source to build custom Docker container images.
 
 | Image | Descriptions |
 |---|---|
-| quebase | A minimalist base image built around [AlmaLinux 9](https://almalinux.org/) |
-| quevault | Same as above with Hashicorp `vault` binary added to it |
+| quebase | A minimalist [AlmaLinux 9](https://almalinux.org/) 9 base image |
+| quevault | Same as above but with Hashicorp `vault` binary added to it |
 
-To use the image, simply refer to it in your workfow `image` parameter:
+Sample Github workflow usage:
 
 ```yaml
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/queone/quebase:1.0.3 # <== like this
-      #image: ghcr.io/queone/quevault:1.0.3 # <== or this
+      image: ghcr.io/queone/quebase:1.0.5   # or quevault:1.0.5
     steps:
+      ...
 ```
 
-See [accompanying workflows](https://github.com/queone/cntimage/actions) that allow building and releasing, testing, and removing each image.
-
-These images are registered in the [GHCR registry](https://github.blog/news-insights/product-news/introducing-github-container-registry/).
+See [accompanying workflows](https://github.com/queone/baseimg/actions) that allow building and registering these images to the [GHCR registry](https://github.blog/news-insights/product-news/introducing-github-container-registry/). These workflows also allow testing and removing these images.
 
 
 ### Development Notes
-
 Development of these images is still in flux, so many things are likely to change at the moment.
