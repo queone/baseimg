@@ -3,7 +3,7 @@ Source to build custom Docker container images.
 
 | Image | Descriptions |
 |---|---|
-| quebase | A minimalist [AlmaLinux 9](https://almalinux.org/) 9 base image |
+| quebase | A minimalist [AlmaLinux 9](https://almalinux.org/) base image |
 | quevault | Same as above but with Hashicorp `vault` binary added to it |
 
 Sample Github workflow usage:
