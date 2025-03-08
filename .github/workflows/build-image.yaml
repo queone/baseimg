@@ -60,13 +60,7 @@ jobs:
           printf "==> ${Yel}$BuildCommand${Rst}\n"
           $BuildCommand
 
-      - name: Debug client-payload
-        run: |
-          Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
-          printf "${Yel}IMAGE_NAME: ${{ env.IMAGE_NAME }}${Rst}\n"
-          printf "${Yel}IMAGE_TAG: ${{ env.IMAGE_TAG }}${Rst}\n"
-
-      - name: Trigger Test Image Workflow
+      - name: Trigger 'Test Image' workflow
         if: success()  # Only trigger if the build was successful
         uses: peter-evans/repository-dispatch@v1
         with:
