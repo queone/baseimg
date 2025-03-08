@@ -37,31 +37,33 @@ jobs:
 
       - name: Extract image name and tag from Dockerfile
         run: |
+          Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           read IMAGE_NAME IMAGE_TAG < <(.github/scripts/get-name-and-tag.sh ${{ github.event.inputs.dockerfile }})
           printf "IMAGE_NAME=$IMAGE_NAME\n" >> $GITHUB_OUTPUT
           printf "IMAGE_TAG=$IMAGE_TAG\n" >> $GITHUB_OUTPUT
           # DEBUG OUTPUT
-          printf "==> IMAGE_NAME = ${Blu}$IMAGE_NAME${Rst}\n"
-          printf "==> IMAGE_TAG  = ${Blu}$IMAGE_TAG${Rst}\n"
+          printf "==> IMAGE_NAME = ${Yel}$IMAGE_NAME${Rst}\n"
+          printf "==> IMAGE_TAG  = ${Yel}$IMAGE_TAG${Rst}\n"
 
       - name: Build the Docker image
         run: |
+          Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           SOURCE_REPO="https://github.com/${{ github.repository }}"
           CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           BuildCommand="docker buildx build \
             -f ${{ github.event.inputs.dockerfile }} \
             --label \"org.opencontainers.image.source=${SOURCE_REPO}\" \
             --label \"org.opencontainers.image.created=${CREATED_DATE}\" \
-            -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
-            -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest \
+            -t ghcr.io/queone/${IMAGE_NAME}:${IMAGE_TAG} \
+            -t ghcr.io/queone/${IMAGE_NAME}:latest \
             --push ."
-          printf "==> ${Blu}$BuildCommand${Rst}\n"
+          printf "==> ${Yel}$BuildCommand${Rst}\n"
           $BuildCommand
 
       - name: Push the Docker image
         run: |
-          docker push ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          docker push ghcr.io/queone/${{ env.IMAGE_NAME }}:latest
+          docker push ghcr.io/queone/${IMAGE_NAME}:${IMAGE_TAG}
+          docker push ghcr.io/queone/${IMAGE_NAME}:latest
 
       - name: Trigger Test Image Workflow
         if: success()  # Only trigger if the build was successful
@@ -72,6 +74,6 @@ jobs:
           event-type: test-image
           client-payload: |
             {
-              "image_name": "${{ env.IMAGE_NAME }}",
-              "image_tag": "${{ env.IMAGE_TAG }}"
+              "image_name": "${IMAGE_NAME}",
+              "image_tag": "${IMAGE_TAG}"
             }

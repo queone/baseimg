@@ -46,6 +46,6 @@ jobs:
           printf "==> IMAGE_TAG : ${Blu}${{ github.event.inputs.image_tag }}${Rst}\n"
 
       - name: Remove image and package
-        run: .github/scripts/remove-image.sh "${{ env.IMAGE_NAME }}" "${{ github.event.inputs.image_tag }}"
+        run: .github/scripts/remove-image.sh "${IMAGE_NAME}" "${{ github.event.inputs.image_tag }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
