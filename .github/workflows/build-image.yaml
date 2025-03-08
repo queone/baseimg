@@ -15,9 +15,6 @@ permissions:
   contents: write # Required to trigger repository dispatch
   packages: write # Required to delete images from GitHub Container Registry
 
-env:
-  DOCKER_BUILDKIT: 1 # Enable BuildKit
-
 jobs:
   build_and_release:
     runs-on: ubuntu-latest
@@ -53,8 +50,8 @@ jobs:
           CREATED_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           BuildCommand="docker buildx build \
             -f ${{ github.event.inputs.dockerfile }} \
-            --label "org.opencontainers.image.source=${SOURCE_REPO}" \
-            --label "org.opencontainers.image.created=${CREATED_DATE}" \
+            --label \"org.opencontainers.image.source=${SOURCE_REPO}\" \
+            --label \"org.opencontainers.image.created=${CREATED_DATE}\" \
             -t ghcr.io/queone/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} \
             -t ghcr.io/queone/${{ env.IMAGE_NAME }}:latest \
             --push ."
