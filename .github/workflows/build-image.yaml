@@ -69,6 +69,6 @@ jobs:
           event-type: test-image
           client-payload: |
             {
-              "image_name": "${IMAGE_NAME}",
-              "image_tag": "${IMAGE_TAG}"
+              "image_name": "${{ env.IMAGE_NAME }}",
+              "image_tag": "${{ env.IMAGE_TAG }}"
             }
