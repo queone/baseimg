@@ -39,8 +39,8 @@ jobs:
         run: |
           Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           read IMAGE_NAME IMAGE_TAG < <(.github/scripts/get-name-and-tag.sh ${{ github.event.inputs.dockerfile }})
-          printf "IMAGE_NAME=$IMAGE_NAME\n" >> $GITHUB_OUTPUT
-          printf "IMAGE_TAG=$IMAGE_TAG\n" >> $GITHUB_OUTPUT
+          printf "IMAGE_NAME=$IMAGE_NAME\n" >> $GITHUB_ENV
+          printf "IMAGE_TAG=$IMAGE_TAG\n" >> $GITHUB_ENV
           # DEBUG OUTPUT
           printf "==> IMAGE_NAME = ${Yel}$IMAGE_NAME${Rst}\n"
           printf "==> IMAGE_TAG  = ${Yel}$IMAGE_TAG${Rst}\n"
