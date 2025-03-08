@@ -1,11 +1,10 @@
 name: Test Image
 
 on:
-  workflow_run:
-    workflows: ["Build Image"]  # Name of the workflow you want to depend on
+  repository_dispatch:  # To allow running from other workflows, like Build Image
     types:
-      - completed
-  workflow_dispatch:
+      - test-image
+  workflow_dispatch:    # To run manually
     inputs:
       image_url_path:
         description: "Specify the full image URL path"
