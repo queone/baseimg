@@ -48,7 +48,7 @@ jobs:
             printf "image_tag=${{ github.event.client_payload.image_tag }}\n" >> $GITHUB_OUTPUT
           fi
 
-  test-container:
+  test-container-tag:
     runs-on: ubuntu-latest
     needs: set-env
     container:
@@ -80,4 +80,30 @@ jobs:
           go version || echo "go not found"
           printf "==> ${Blu}vault version${Rst}\n"
           /usr/bin/vault version || echo "/usr/bin/vault not found"
+          printf "==> ${Red}END${Rst}\n"
+
+  test-container-latest:
+    runs-on: ubuntu-latest
+    needs: set-env
+    container:
+      image: ${{ needs.set-env.outputs.image_url_path }}:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+
+      - name: Setup Go environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.1'
+
+      - name: Test commands
+        run: |
+          Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
+          printf "==> ${Gre}START${Rst}\n"
+          printf "==> Testing image: ${Blu}${{ needs.set-env.outputs.image_url_path }}:latest${Rst}\n"
+          printf "==> ${Blu}uname -m${Rst}\n"
+          uname -m
+          printf "==> ${Blu}go version${Rst}\n"
+          go version || echo "go not found"
           printf "==> ${Red}END${Rst}\n"
