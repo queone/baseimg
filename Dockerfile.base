@@ -6,7 +6,7 @@ FROM almalinux/9-minimal
 
 # Add metadata to the image
 LABEL org.opencontainers.image.title="quebase" \
-      org.opencontainers.image.version="1.0.6" \
+      org.opencontainers.image.version="1.0.7" \
       org.opencontainers.image.description="A minimalist AlmaLinux 9 base image"
 
 # Copy setup files

@@ -17,7 +17,8 @@ python3.12-pip \
 jq \
 which \
 iputils \
-iproute
+iproute \
+findutils
 # Append/add other required packages here
 microdnf clean all
 rm -rf /var/cache/dnf/*
