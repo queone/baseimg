@@ -13,7 +13,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/queone/quebase:1.0.5   # or quevault:1.0.5
+      image: ghcr.io/queone/quebase:latest  # or quevault:latest
     steps:
       ...
 ```

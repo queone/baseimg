@@ -30,11 +30,6 @@ jobs:
       image_tag: ${{ steps.set-env.outputs.image_tag }}
     steps:
     
-      # - name: Debug client-payload
-      #   run: |
-      #     Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
-      #     printf "${Yel}client_payload: ${{ toJson(github.event.client_payload) }}${Rst}\n"
-
       - name: Set up environment variables
         id: set-env
         run: |
@@ -63,7 +58,7 @@ jobs:
         with:
           go-version: '1.24.1'
 
-      - name: Test commands
+      - name: Testing image ${{ needs.set-env.outputs.image_url_path }}:${{ needs.set-env.outputs.image_tag }}
         run: |
           Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           printf "==> ${Gre}START${Rst}\n"
@@ -92,18 +87,11 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
 
-      - name: Setup Go environment
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.1'
-
-      - name: Test commands
+      - name: Testing image ${{ needs.set-env.outputs.image_url_path }}:latest
         run: |
           Gre='\e[1;32m' Red='\e[1;31m' Mag='\e[1;35m' Yel='\e[1;33m' Blu='\e[1;34m' Rst='\e[0m'
           printf "==> ${Gre}START${Rst}\n"
           printf "==> Testing image: ${Blu}${{ needs.set-env.outputs.image_url_path }}:latest${Rst}\n"
-          printf "==> ${Blu}uname -m${Rst}\n"
-          uname -m
-          printf "==> ${Blu}go version${Rst}\n"
-          go version || echo "go not found"
+          printf "==> ${Blu}uname -a${Rst}\n"
+          uname -a
           printf "==> ${Red}END${Rst}\n"
