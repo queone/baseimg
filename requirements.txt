@@ -1,3 +1,5 @@
 requests
 hvac
-# azure-cli   # This increases images size by 1.1G!! Why Microsoft??
+# azure-cli   # Microsoft, why does this package increases the image size by 1.1G??
+msal
+base64
